@@ -160,11 +160,19 @@ Do not initialize with README.
 
 ---
 
+## Step 1.2: Create repository in github
+
+    devops-git-lab-name
+
 ## Step 2: Connect Local Repo to GitHub
 
 ```bash
 git remote add origin https://github.com/USERNAME/devops-git-lab.git
+
+git remote set-url origin https://YOUR_USERNAME:YOUR_ACCESS_TOKEN@github.com/USERNAME/REPO.git
 ```
+    Example
+    https://github.com/ramashanker87
 
 Verify remote:
 
@@ -219,6 +227,7 @@ git switch feature-login
 echo "Login feature added" > login.txt
 git add login.txt
 git commit -m "Added login feature"
+git push origin feature-login
 ```
 
 ---
