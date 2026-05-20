@@ -111,8 +111,14 @@ git config --global credential.helper '!aws codecommit credential-helper $@'
 git config --global credential.UseHttpPath true
 export AWS_PROFILE=devops
 
-windows
-$env:AWS_PROFILE="codecommit"
+
+Windows
+aws sts get-caller-identity --profile devops
+
+git config --global credential.helper "!aws codecommit credential-helper `$@"
+git config --global credential.UseHttpPath true
+
+$env:AWS_PROFILE="devops"
 ```
 ---
 
