@@ -36,14 +36,23 @@ CloudWatch Logs
 
 # STEP 1 – Create CodeCommit Repository
 
-- Repository name: devops-training-repo
+    - Repository name: devops-training-repo
+
+     aws codecommit create-repository \
+      --repository-name devops-training-repo-rama \
+      --repository-description "DevOps Training Repository" --profile devops
 
 ---
 
+    aws sts get-caller-identity --profile devops
+    git config --global credential.helper '!aws codecommit credential-helper $@'
+    git config --global credential.UseHttpPath true
+    export AWS_PROFILE=devops
+
 # STEP 2 – Clone Repository
 
-git clone https://git-codecommit.us-east-1.amazonaws.com/v1/repos/devops-training-repo
-cd devops-training-repo
+    git clone https://git-codecommit.us-east-1.amazonaws.com/v1/repos/devops-training-repo-rama
+    cd devops-training-repo-rama
 
 ---
 
@@ -85,6 +94,7 @@ artifacts:
 ---
 
 # STEP 4 – Push Code
+
 ``` 
 git add .
 git commit -m "initial commit"
@@ -96,30 +106,22 @@ git push origin master
 
 #  STEP 5 – Create S3 Bucket
 
-- devops-training-build-artifacts
+    - devops-training-build-artifacts-rama
 
 ---
 
-#  STEP 6 – IAM Role
-
-    Attach:
-        - AmazonS3FullAccess
-        - CloudWatchLogsFullAccess
-        - AWSCodeCommitReadOnly
-
----
 
 #  STEP 7 – CodeBuild Project
-    project name: devops-build
+    project name: devops-build-rama
     Source: CodeCommit
-    repository: devops-training-repo
+    repository: devops-training-repo-rama
     Branch: master
     Operating system: ubuntu
     image: latest
     image version:latest
     Buildspec : use a buildspec file
     Artifacts :S3
-    Bucket Name: devops-training-build-artifacts
+    Bucket Name: devops-training-build-artifacts-rama
     Name: output
     Path: (empty)
     Artifacts packaging: zip
