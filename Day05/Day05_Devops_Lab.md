@@ -208,7 +208,7 @@ mkdir sample-app
 cd sample-app
 ```
 
-## Create Directory Structure
+## Create Directory Structure on local machine 
 
 ```text
 sample-app/
@@ -226,7 +226,7 @@ sample-app/
 ## Create index.html
 
 ```bash
-nano index.html
+vim index.html
 ```
 
 Add:
@@ -239,7 +239,7 @@ Add:
 
 ```bash
 mkdir scripts
-nano scripts/install.sh
+vim scripts/install.sh
 ```
 
 Add:
@@ -254,7 +254,7 @@ systemctl enable httpd
 ## Create start_server.sh
 
 ```bash
-nano scripts/start_server.sh
+vim scripts/start_server.sh
 ```
 
 Add:
@@ -276,7 +276,7 @@ chmod +x scripts/start_server.sh
 # Step 7 – Create appspec.yml
 
 ```bash
-nano appspec.yml
+vim appspec.yml
 ```
 
 Add:
@@ -308,7 +308,7 @@ hooks:
 Install zip if needed:
 
 ```bash
-sudo yum install zip -y
+sudo apt install zip -y
 ```
 
 ## Create ZIP File
