@@ -320,7 +320,7 @@ export AWS_PROFILE=devops
 
 git add .
 git commit -m "Initial commit"
-git push origin main
+git push origin master
 ```
 
 ---
