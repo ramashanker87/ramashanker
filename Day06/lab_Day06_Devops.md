@@ -734,6 +734,7 @@ sudo systemctl restart httpd
 
 ```bash
 sudo tail -n 100 /var/log/aws/codedeploy-agent/codedeploy-agent.log
+sudo grep -i -A10 -B10 "Install\|UnknownError\|error\|failed" /var/log/aws/codedeploy-agent/codedeploy-agent.log
 ```
 
 ---
