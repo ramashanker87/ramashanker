@@ -100,7 +100,7 @@ Example:
 
 ```bash
 chmod 400 rama-ec2.pem
-ssh -i rama-ec2.pem ec2-user@54.147.209.103
+ssh -i rama-ec2.pem ec2-user@18.209.32.250
 ```
 
 ---
@@ -185,7 +185,7 @@ ssh -i <KEY-FILE> ec2-user@<JENKINS-IP>
 Example:
 
 ```bash
-ssh -i rama-ec2.pem ec2-user@34.239.183.171
+ssh -i rama-ec2.pem ec2-user@54.224.211.20
 ```
 
 ---
