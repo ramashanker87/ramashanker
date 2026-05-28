@@ -149,77 +149,15 @@ Create Stack
 
 ---
 
-# Step 4 – Upload Template
+## Command to create cloudformation
 
-Select:
+    aws cloudformation create-stack \
+    --stack-name rama-ec2-stack \
+    --template-body file://rama-ec2-template.yaml \
+    --capabilities CAPABILITY_NAMED_IAM \
+    --profile devops
 
-```text
-Upload a template file
-```
 
-Upload:
-
-```text
-simple-ec2-template.yaml
-```
-
-Click:
-
-```text
-Next
-```
-
----
-
-# Step 5 – Configure Stack
-
-Stack Name:
-
-```text
-day09-ec2-stack
-```
-
-Click:
-
-```text
-Next
-```
-
-Keep defaults.
-
-Click:
-
-```text
-Next
-```
-
----
-
-# Step 6 – Create Stack
-
-Select:
-
-```text
-I acknowledge AWS CloudFormation might create IAM resources
-```
-
-Click:
-
-```text
-Submit
-```
-
----
-
-# Step 7 – Monitor Stack Creation
-
-Wait until status becomes:
-
-```text
-CREATE_COMPLETE
-```
-
----
 
 # Part 3 – Validate Resources
 
@@ -328,12 +266,11 @@ Click:
 Delete
 ```
 
-CloudFormation automatically deletes:
+## Delete cloudformation command
 
-- EC2
-- Security Group
-
----
+    aws cloudformation delete-stack \
+    --stack-name rama-ec2-stack \
+    --profile devops
 
 # Common Errors and Fixes
 
