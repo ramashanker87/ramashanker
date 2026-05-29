@@ -166,6 +166,45 @@ aws cloudformation create-stack --stack-name parent-stack --template-body file:/
 
 # Lab 3 — Multi-Environment Provisioning
 
+## environment stack
+
+``` 
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: Multi-environment CloudFormation template
+
+Parameters:
+  Environment:
+    Type: String
+    AllowedValues:
+      - dev
+      - test
+      - prod
+    Description: Deployment environment
+
+Resources:
+  EnvironmentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${Environment}-demo-bucket-${AWS::AccountId}"
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+        - Key: ManagedBy
+          Value: CloudFormation
+
+Outputs:
+  BucketName:
+    Description: Name of the created S3 bucket
+    Value: !Ref EnvironmentBucket
+
+  BucketArn:
+    Description: ARN of the S3 bucket
+    Value: !GetAtt EnvironmentBucket.Arn
+```
+
+
 ## Deploy Dev Environment
 
 ```bash
@@ -257,3 +296,14 @@ Participants will:
 - Understand StackSets
 - Provision multiple environments
 
+## Assignment
+
+    Create three EC2 multienvironment dev test prod 
+    example: rama-dev-web-server,rama-test-web-server,rama-prod-web-server
+    Each of EC2 should have we server install and have index.html
+    When access dev it should display 
+        Welcome to Dev server
+    Similarly for test and prod
+     Make sure its accessible through http IP address.
+
+            
