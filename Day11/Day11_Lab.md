@@ -1,6 +1,6 @@
 # Day 11 Lab Guide — AWS Infrastructure Provisioning with Terraform
 ## Module 2 – Infrastructure as Code (IaC)
-### Date: 20-May-2026 (Monday)
+### Date: 1-june-2026 (Monday)
 
 ---
 
