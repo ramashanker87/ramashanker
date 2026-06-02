@@ -357,6 +357,7 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
+  profile = var.aws_profile
 }
 ```
 
@@ -379,6 +380,11 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "aws_profile" {
+  description = "AWS Profile"
+  type        = string
+  default     = "devops"
+}
 variable "environment" {
   description = "Environment name"
   type        = string
@@ -416,6 +422,7 @@ Add and update names to unique values:
 
 ```hcl
 aws_region        = "us-east-1"
+aws_profile        = "devops"
 environment       = "dev"
 project_name      = "day12-terraform"
 state_bucket_name = "yourname-day12-tf-state-20260602"
