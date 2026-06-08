@@ -11,13 +11,13 @@ You need:
 Verify AWS login:
 
 ```bash
-aws sts get-caller-identity
+aws sts get-caller-identity --profile devops
 ```
 
 Example ECR image URI:
 
 ```text
-123456789012.dkr.ecr.eu-north-1.amazonaws.com/hello-ecr:v2
+386757865964.dkr.ecr.us-east-1.amazonaws.com/rama-ecr:v2
 ```
 
 ---
@@ -28,15 +28,15 @@ Replace the image URI and region as required.
 
 ```bash
 aws cloudformation deploy \
+  --stack-name rama-ecs-fargate \
   --template-file Day16_ecs_fargate_lab.yml \
-  --stack-name day16-ecs-fargate-lab \
   --capabilities CAPABILITY_NAMED_IAM \
-  --region eu-north-1 \
   --parameter-overrides \
-    ProjectName=day16-ecs-fargate \
-    ContainerImage=123456789012.dkr.ecr.eu-north-1.amazonaws.com/hello-ecr:v2 \
-    ContainerPort=8080 \
-    DesiredCount=1
+      VpcId=vpc-0ca5b92e540035af6 \
+      PublicSubnet1=subnet-02e4c0c0d48c6abe0 \
+      PublicSubnet2=subnet-0fedff33455ac1bd6 \
+      ECRImage=386757865964.dkr.ecr.us-east-1.amazonaws.com/rama-ecr:v2 \
+  --profile devops
 ```
 
 ---
@@ -45,9 +45,9 @@ aws cloudformation deploy \
 
 ```bash
 aws cloudformation describe-stacks \
-  --stack-name day16-ecs-fargate-lab \
-  --region eu-north-1 \
-  --query "Stacks[0].Outputs"
+  --stack-name rama-ecs-fargate \
+  --query "Stacks[0].Outputs" \
+  --profile devops
 ```
 
 Open the `ApplicationURL` value in a browser.
@@ -57,20 +57,22 @@ Open the `ApplicationURL` value in a browser.
 ## 4. Verify ECS Service
 
 ```bash
-aws ecs list-clusters --region eu-north-1
+aws ecs list-clusters --region us-east-1 --profile devops
 ```
 
 ```bash
 aws ecs list-services \
-  --cluster day16-ecs-fargate-cluster \
-  --region eu-north-1
+  --cluster rama-fargate-cluster \
+  --region us-east-1 \
+  --profile devops
 ```
 
 ```bash
 aws ecs list-tasks \
-  --cluster day16-ecs-fargate-cluster \
-  --service-name day16-ecs-fargate-service \
-  --region eu-north-1
+  --cluster rama-fargate-cluster \
+  --service-name Rama-service \
+  --region us-east-1 \
+  --profile devops
 ```
 
 ---
@@ -79,8 +81,9 @@ aws ecs list-tasks \
 
 ```bash
 aws logs describe-log-streams \
-  --log-group-name /ecs/day16-ecs-fargate \
-  --region eu-north-1
+  --log-group-name /ecs/rama-fargate-cluster \
+  --region us-east-1 \
+  --profile devops
 ```
 
 ---
@@ -89,10 +92,11 @@ aws logs describe-log-streams \
 
 ```bash
 aws ecs update-service \
-  --cluster day16-ecs-fargate-cluster \
-  --service day16-ecs-fargate-service \
+  --cluster rama-fargate-cluster \
+  --service Rama-service \
   --desired-count 2 \
-  --region eu-north-1
+  --region us-east-1 \
+  --profile devops
 ```
 
 ---
@@ -101,14 +105,16 @@ aws ecs update-service \
 
 ```bash
 aws cloudformation delete-stack \
-  --stack-name day16-ecs-fargate-lab \
-  --region eu-north-1
+  --stack-name rama-ecs-fargate \
+  --region us-east-1 \
+  --profile devops
 ```
 
 Check deletion:
 
 ```bash
 aws cloudformation describe-stacks \
-  --stack-name day16-ecs-fargate-lab \
-  --region eu-north-1
+  --stack-name rama-ecs-fargate \
+  --region us-east-1 \
+  --profile devops
 ```
