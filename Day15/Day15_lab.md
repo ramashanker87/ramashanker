@@ -104,7 +104,7 @@ aws sts get-caller-identity
 
 ```bash
 aws ecr create-repository \
---repository-name hello-ecr \
+--repository-name rama-ecr \
 --region us-east-1 --profile devops
 ```
 
