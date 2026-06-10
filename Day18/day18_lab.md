@@ -119,40 +119,6 @@ aws eks list-nodegroups \
   --profile devops
 ```
 
----
-
-# Lab 8: Deploy Application from Amazon ECR
-
-## Create Namespace
-
-```bash
-kubectl create namespace day17
-```
-
-## Deploy Application
-
-```bash
-kubectl apply -f k8s-deployment.yml
-```
-
-## Verify Deployment
-
-```bash
-kubectl get deployments -n day17
-```
-
-## Verify Pods
-
-```bash
-kubectl get pods -n day17 -o wide
-```
-
-Expected:
-
-```text
-rama-ecr-app-xxxxx   1/1 Running
-rama-ecr-app-xxxxx   1/1 Running
-```
 
 ## Check Application Logs
 
@@ -161,14 +127,6 @@ kubectl logs -n day17 deployment/rama-ecr-app
 ```
 
 ---
-
-# Lab 9: Verify Service Networking
-
-## Deploy Service
-
-```bash
-kubectl apply -f k8s-service.yml
-```
 
 ## Verify Service
 
@@ -214,12 +172,6 @@ kubectl run debug --rm -it \
   -n day17 -- sh
 ```
 
-## Test Service Connectivity
-
-```bash
-curl -v http://rama-ecr-service
-```
-
 ## Test Pod Directly
 
 ```bash
@@ -250,8 +202,29 @@ Verify:
 
 ---
 
+## Disaster recovery and maintain
+
+    kubectl get pods -n day17
+    kubectl delete pod rama-ecr-app-87b74d478-d2pjc -n day17
+    kubectl get pods -n day17
+
+    If the pod is managed by a Deployment, ReplicaSet, StatefulSet, etc., 
+    Kubernetes will automatically create a replacement pod.
+
 # Lab 12: Scale Node Group
 
+## Scale down a Deployment (stop all its pods)
+    kubectl get deployment -n day17
+
+    kubectl scale deployment <deployment-name> --replicas=0 -n <namespace>
+
+    Example:
+    
+    kubectl scale deployment rama-ecr-app --replicas=0 -n day17
+    
+    To start it again:
+    
+    kubectl scale deployment rama-ecr-app --replicas=3 -n day17
 ## Increase Desired Capacity
 
 ```bash
@@ -266,7 +239,7 @@ aws eks update-nodegroup-config \
 ## Verify
 
 ```bash
-kubectl get nodes
+kubectl get nodes -n day17
 ```
 
 Observe the additional worker node joining the cluster.
