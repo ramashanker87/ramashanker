@@ -107,7 +107,7 @@ kubectl get namespaces
 ## View All Pods
 
 ```bash
-kubectl get pods -A
+kubectl get pods -n day17
 ```
 
 ## View Node Groups
@@ -205,7 +205,7 @@ Verify:
 ## Disaster recovery and maintain
 
     kubectl get pods -n day17
-    kubectl delete pod rama-ecr-app-87b74d478-d2pjc -n day17
+    kubectl delete pod rama-ecr-app-87b74d478-hn2sc -n day17
     kubectl get pods -n day17
 
     If the pod is managed by a Deployment, ReplicaSet, StatefulSet, etc., 
@@ -216,11 +216,11 @@ Verify:
 ## Scale down a Deployment (stop all its pods)
     kubectl get deployment -n day17
 
-    kubectl scale deployment <deployment-name> --replicas=0 -n <namespace>
+    kubectl scale deployment <deployment-name> --replicas=1 -n <namespace>
 
     Example:
     
-    kubectl scale deployment rama-ecr-app --replicas=0 -n day17
+    kubectl scale deployment rama-ecr-app --replicas=1 -n day17
     
     To start it again:
     
@@ -231,7 +231,7 @@ Verify:
 aws eks update-nodegroup-config \
   --cluster-name rama-eks-cluster \
   --nodegroup-name rama-eks-nodegroup \
-  --scaling-config minSize=1,maxSize=3,desiredSize=3 \
+  --scaling-config minSize=1,maxSize=3,desiredSize=2 \
   --region us-east-1 \
   --profile devops
 ```
