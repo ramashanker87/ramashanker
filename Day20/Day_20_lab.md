@@ -52,13 +52,13 @@ export CLUSTER_NAME=day20-eks-helm-scaling
 export NODEGROUP_NAME=day20-managed-ng
 export APP_NAME=day20-web
 export NAMESPACE=day20
-export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --profile devops --output text)
 ```
 
 Check your AWS identity:
 
 ```bash
-aws sts get-caller-identity
+aws sts get-caller-identity --profile devops
 ```
 
 Explanation:
@@ -66,6 +66,21 @@ Explanation:
 This confirms that the AWS CLI is authenticated and shows which AWS account will be charged for resources created in this lab.
 
 ---
+
+## Install ekctl
+
+
+``` 
+ARCH=amd64
+
+curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_Linux_${ARCH}.tar.gz"
+
+tar -xzf eksctl_Linux_${ARCH}.tar.gz
+
+sudo mv eksctl /usr/local/bin/
+
+eksctl version
+```
 
 ## Part 1: Create an Amazon EKS cluster
 
@@ -97,6 +112,7 @@ Verify cluster access:
 ```bash
 aws eks update-kubeconfig \
   --region $AWS_REGION \
+  --profile devops \
   --name $CLUSTER_NAME
 
 kubectl get nodes
@@ -199,6 +215,7 @@ Create an ECR repository:
 ```bash
 aws ecr create-repository \
   --repository-name $APP_NAME \
+  --profile devops \
   --region $AWS_REGION
 ```
 
@@ -209,7 +226,8 @@ Authenticate Docker to ECR:
 ```bash
 aws ecr get-login-password --region $AWS_REGION | \
   docker login --username AWS --password-stdin \
-  $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+  $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com \
+  --profile devops
 ```
 
 Build and push the image:
@@ -621,6 +639,7 @@ aws eks describe-nodegroup \
   --nodegroup-name $NODEGROUP_NAME \
   --region $AWS_REGION \
   --query 'nodegroup.resources.autoScalingGroups[*].name' \
+  --profile devops \
   --output text
 ```
 
@@ -632,6 +651,7 @@ export ASG_NAME=$(aws eks describe-nodegroup \
   --nodegroup-name $NODEGROUP_NAME \
   --region $AWS_REGION \
   --query 'nodegroup.resources.autoScalingGroups[0].name' \
+  --profile devops \
   --output text)
 
 echo $ASG_NAME
@@ -643,6 +663,7 @@ Describe the ASG:
 aws autoscaling describe-auto-scaling-groups \
   --auto-scaling-group-names $ASG_NAME \
   --region $AWS_REGION \
+  --profile devops \
   --query 'AutoScalingGroups[0].{Min:MinSize,Desired:DesiredCapacity,Max:MaxSize,Instances:Instances[*].InstanceId}'
 ```
 
@@ -710,7 +731,8 @@ Create the IAM policy:
 ```bash
 aws iam create-policy \
   --policy-name Day20ClusterAutoscalerPolicy \
-  --policy-document file://cluster-autoscaler-policy.json
+  --policy-document file://cluster-autoscaler-policy.json \
+  --profile devops
 ```
 
 Create an IAM service account for Cluster Autoscaler:
@@ -722,7 +744,8 @@ eksctl create iamserviceaccount \
   --name cluster-autoscaler \
   --attach-policy-arn arn:aws:iam::$ACCOUNT_ID:policy/Day20ClusterAutoscalerPolicy \
   --approve \
-  --region $AWS_REGION
+  --region $AWS_REGION \
+  --profile devops
 ```
 
 Install Cluster Autoscaler using Helm:
@@ -800,7 +823,8 @@ Check Auto Scaling group desired capacity:
 aws autoscaling describe-auto-scaling-groups \
   --auto-scaling-group-names $ASG_NAME \
   --region $AWS_REGION \
-  --query 'AutoScalingGroups[0].{Min:MinSize,Desired:DesiredCapacity,Max:MaxSize}'
+  --query 'AutoScalingGroups[0].{Min:MinSize,Desired:DesiredCapacity,Max:MaxSize}' \
+  --profile devops
 ```
 
 Explanation:
@@ -900,6 +924,7 @@ Delete the ECR repository:
 aws ecr delete-repository \
   --repository-name $APP_NAME \
   --region $AWS_REGION \
+  --profile devops \
   --force
 ```
 
@@ -915,7 +940,8 @@ Optional: delete the IAM policy if it is no longer attached:
 
 ```bash
 aws iam delete-policy \
-  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/Day20ClusterAutoscalerPolicy
+  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/Day20ClusterAutoscalerPolicy \
+  --profile devops
 ```
 
 Explanation:
@@ -966,7 +992,7 @@ Check:
 kubectl get pods -n $NAMESPACE
 kubectl describe pod <pending-pod-name> -n $NAMESPACE
 kubectl logs -n kube-system deployment/cluster-autoscaler --tail=100
-aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names $ASG_NAME --region $AWS_REGION
+aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names $ASG_NAME --region $AWS_REGION --profile devops
 ```
 
 Common causes:

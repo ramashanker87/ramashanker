@@ -1071,16 +1071,19 @@ Delete EKS node group and cluster:
 aws eks delete-nodegroup \
   --cluster-name ${CLUSTER_NAME} \
   --nodegroup-name day19-ng \
-  --region ${AWS_REGION}
+  --region ${AWS_REGION} \
+  --profile devops
 
 aws eks wait nodegroup-deleted \
   --cluster-name ${CLUSTER_NAME} \
   --nodegroup-name day19-ng \
-  --region ${AWS_REGION}
+  --region ${AWS_REGION} \
+  --profile devops
 
 aws eks delete-cluster \
   --name ${CLUSTER_NAME} \
-  --region ${AWS_REGION}
+  --region ${AWS_REGION} \
+  --profile devops
 ```
 
 Delete ECR repository:
@@ -1089,7 +1092,8 @@ Delete ECR repository:
 aws ecr delete-repository \
   --repository-name ${ECR_REPO} \
   --force \
-  --region ${AWS_REGION}
+  --region ${AWS_REGION} \
+  --profile devops
 ```
 
 Delete EFS only when data is no longer required:
@@ -1098,42 +1102,43 @@ Delete EFS only when data is no longer required:
 aws efs describe-mount-targets \
   --file-system-id ${EFS_ID} \
   --query 'MountTargets[*].MountTargetId' \
+  --profile devops \
   --output text
 
-aws efs delete-mount-target --mount-target-id mt-xxxxxxxxxxxxxxxxx
-aws efs delete-mount-target --mount-target-id mt-yyyyyyyyyyyyyyyyy
+aws efs delete-mount-target --mount-target-id fsmt-0a84528f44075c7ec --profile devops
+aws efs delete-mount-target --mount-target-id fsmt-066449aa82b23bb07 --profile devops
 
-aws efs delete-file-system --file-system-id ${EFS_ID}
+aws efs delete-file-system --file-system-id ${EFS_ID} --profile devops
 ```
 
 Delete IAM roles:
 
 ```bash
-aws iam detach-role-policy --role-name Day19EksClusterRole --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
-aws iam delete-role --role-name Day19EksClusterRole
+aws iam detach-role-policy --role-name Day19EksClusterRole --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy --profile devops
+aws iam delete-role --role-name Day19EksClusterRole --profile devops
 
-aws iam detach-role-policy --role-name Day19EksNodeRole --policy-arn arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
-aws iam detach-role-policy --role-name Day19EksNodeRole --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
-aws iam detach-role-policy --role-name Day19EksNodeRole --policy-arn arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
-aws iam delete-role --role-name Day19EksNodeRole
+aws iam detach-role-policy --role-name Day19EksNodeRole --policy-arn arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy --profile devops
+aws iam detach-role-policy --role-name Day19EksNodeRole --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly --profile devops
+aws iam detach-role-policy --role-name Day19EksNodeRole --policy-arn arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy --profile devops
+aws iam delete-role --role-name Day19EksNodeRole --profile devops
 
-aws iam detach-role-policy --role-name Day19EbsCsiRole --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
-aws iam delete-role --role-name Day19EbsCsiRole
+aws iam detach-role-policy --role-name Day19EbsCsiRole --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy --profile devops
+aws iam delete-role --role-name Day19EbsCsiRole --profile devops
 
-aws iam detach-role-policy --role-name Day19EfsCsiRole --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEFSCSIDriverPolicy
-aws iam delete-role --role-name Day19EfsCsiRole
+aws iam detach-role-policy --role-name Day19EfsCsiRole --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEFSCSIDriverPolicy --profile devops
+aws iam delete-role --role-name Day19EfsCsiRole --profile devops
 ```
 
 Delete VPC resources after load balancers and ENIs are gone:
 
 ```bash
-aws ec2 delete-security-group --group-id ${EFS_SG_ID}
-aws ec2 detach-internet-gateway --internet-gateway-id ${IGW_ID} --vpc-id ${VPC_ID}
-aws ec2 delete-internet-gateway --internet-gateway-id ${IGW_ID}
-aws ec2 delete-subnet --subnet-id ${SUBNET1_ID}
-aws ec2 delete-subnet --subnet-id ${SUBNET2_ID}
-aws ec2 delete-route-table --route-table-id ${RTB_ID}
-aws ec2 delete-vpc --vpc-id ${VPC_ID}
+aws ec2 delete-security-group --group-id ${EFS_SG_ID} --profile devops
+aws ec2 detach-internet-gateway --internet-gateway-id ${IGW_ID} --vpc-id ${VPC_ID} --profile devops
+aws ec2 delete-internet-gateway --internet-gateway-id ${IGW_ID} --profile devops
+aws ec2 delete-subnet --subnet-id ${SUBNET1_ID} --profile devops
+aws ec2 delete-subnet --subnet-id ${SUBNET2_ID} --profile devops
+aws ec2 delete-route-table --route-table-id ${RTB_ID} --profile devops
+aws ec2 delete-vpc --vpc-id ${VPC_ID} --profile devops
 ```
 
 ---
