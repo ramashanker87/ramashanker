@@ -31,6 +31,27 @@ By the end of this lab, you will understand:
 
 You need the following installed and configured on your workstation or AWS CloudShell:
 
+## Install ekctl
+
+```bash
+ARCH=amd64
+
+curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_Linux_${ARCH}.tar.gz"
+
+tar -xzf eksctl_Linux_${ARCH}.tar.gz
+
+sudo mv eksctl /usr/local/bin/
+
+eksctl version
+```
+
+## Install Helm
+
+```bash
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+helm version
+```
+
 ```bash
 aws --version
 kubectl version --client
@@ -67,21 +88,6 @@ This confirms that the AWS CLI is authenticated and shows which AWS account will
 
 ---
 
-## Install ekctl
-
-
-``` 
-ARCH=amd64
-
-curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_Linux_${ARCH}.tar.gz"
-
-tar -xzf eksctl_Linux_${ARCH}.tar.gz
-
-sudo mv eksctl /usr/local/bin/
-
-eksctl version
-```
-
 ## Part 1: Create an Amazon EKS cluster
 
 Create an EKS cluster with one managed node group.
@@ -94,7 +100,9 @@ eksctl create cluster \
   --nodes-min 1 \
   --nodes-max 4 \
   --nodegroup-name $NODEGROUP_NAME \
-  --managed
+  --managed \
+  --profile devops
+
 ```
 
 Explanation:
