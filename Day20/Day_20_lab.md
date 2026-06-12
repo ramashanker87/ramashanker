@@ -93,17 +93,50 @@ This confirms that the AWS CLI is authenticated and shows which AWS account will
 Create an EKS cluster with one managed node group.
 
 ```bash
+export VPC_ID=$(aws ec2 describe-vpcs \
+  --filters Name=isDefault,Values=true \
+  --region $AWS_REGION \
+  --profile $AWS_PROFILE \
+  --query 'Vpcs[0].VpcId' \
+  --output text)
+```
+```bash
+echo $VPC_ID
+```
+
+```bash
+export SUBNET_IDS=$(aws ec2 describe-subnets \
+  --filters Name=vpc-id,Values=$VPC_ID \
+            Name=availability-zone,Values=us-east-1a,us-east-1b \
+  --region $AWS_REGION \
+  --profile $AWS_PROFILE \
+  --query 'join(`,`, Subnets[*].SubnetId)' \
+  --output text)
+```
+```bash
+echo $SUBNET_IDS
+```
+```bash
 eksctl create cluster \
   --name $CLUSTER_NAME \
   --region $AWS_REGION \
-  --zones us-east-1a,us-east-1b \
+  --vpc-public-subnets $SUBNET_IDS \
   --nodes 1 \
   --nodes-min 1 \
-  --nodes-max 2 \
+  --nodes-max 4 \
   --nodegroup-name $NODEGROUP_NAME \
   --managed \
-  --profile devops
+  --profile $AWS_PROFILE
+```
 
+
+```bash
+aws eks describe-cluster \
+  --name $CLUSTER_NAME \
+  --region $AWS_REGION \
+  --profile $AWS_PROFILE \
+  --query 'cluster.{Name:name,Status:status,Version:version,Endpoint:endpoint}' \
+  --output table
 ```
 
 Explanation:
