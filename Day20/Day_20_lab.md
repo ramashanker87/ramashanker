@@ -68,7 +68,7 @@ You also need:
 Set environment variables used throughout the lab:
 
 ```bash
-export AWS_REGION=eu-north-1
+export AWS_REGION=us-east-1
 export CLUSTER_NAME=day20-eks-helm-scaling
 export NODEGROUP_NAME=day20-managed-ng
 export APP_NAME=day20-web
@@ -96,9 +96,10 @@ Create an EKS cluster with one managed node group.
 eksctl create cluster \
   --name $CLUSTER_NAME \
   --region $AWS_REGION \
-  --nodes 2 \
+  --zones us-east-1a,us-east-1b \
+  --nodes 1 \
   --nodes-min 1 \
-  --nodes-max 4 \
+  --nodes-max 2 \
   --nodegroup-name $NODEGROUP_NAME \
   --managed \
   --profile devops
@@ -232,10 +233,8 @@ If the repository already exists, continue with the next command.
 Authenticate Docker to ECR:
 
 ```bash
-aws ecr get-login-password --region $AWS_REGION | \
-  docker login --username AWS --password-stdin \
-  $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com \
-  --profile devops
+aws ecr get-login-password --region ${AWS_REGION} --profile devops \
+  | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
 ```
 
 Build and push the image:
@@ -537,6 +536,13 @@ Helm stores release revisions. Rollback is useful when a deployment causes appli
 Install Metrics Server:
 
 ```bash
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+```
+## Incase if fails
+
+```bash 
+kubectl delete deployment metrics-server -n kube-system
+kubectl delete apiservice v1beta1.metrics.k8s.io
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 ```
 
