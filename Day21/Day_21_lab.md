@@ -870,7 +870,7 @@ aws iam create-service-specific-credential \
   --service-name codecommit.amazonaws.com \
   --profile devops
 ```
-
+## Copy the ServiceUserName and ServicePassword from terminal
 ```
 export CODECOMMIT_USERNAME="ac-at-386757865964"
 export CODECOMMIT_PASSWORD="pLICuZZc8o0SEhz7sN4CAoDOsDLoB96csEEhaCyQX70ZNiYAN7WkziQPWiI="
