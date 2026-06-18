@@ -205,8 +205,8 @@ def home():
 
 @app.route("/health")
 def health():
-    logger.info("Health endpoint called")
-    return {"status": "healthy"}
+    # Keep this endpoint very small and always return HTTP 200 for ALB health checks.
+    return {"status": "healthy"}, 200
 
 
 @app.route("/slow")
@@ -246,6 +246,7 @@ The app also includes basic AWS X-Ray instrumentation.
 cat > requirements.txt <<'EOF'
 flask==3.0.3
 aws-xray-sdk==2.14.0
+gunicorn==22.0.0
 EOF
 ```
 
@@ -270,7 +271,7 @@ COPY app.py .
 
 EXPOSE 5000
 
-CMD ["python", "app.py"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "30", "app:app"]
 EOF
 ```
 
@@ -434,18 +435,27 @@ This lab uses the default VPC to keep the setup simple.
 
 ## Step 14: Get Public Subnets
 
-```bash
-export SUBNET_IDS=$(aws ec2 describe-subnets   --filters Name=vpc-id,Values=$VPC_ID   --region $AWS_REGION   --profile $AWS_PROFILE   --query 'Subnets[*].SubnetId'   --output text)
+Use two available subnets from the default VPC. Keep two formats:
 
-echo $SUBNET_IDS
-```
-
-Create comma-separated subnet list:
+- `SUBNET_IDS_SPACE` for commands such as `create-load-balancer`
+- `SUBNET_IDS_COMMA` for ECS `awsvpcConfiguration`
 
 ```bash
-export SUBNET_IDS_COMMA=$(echo $SUBNET_IDS | tr ' ' ',')
-echo $SUBNET_IDS_COMMA
+export SUBNET_IDS_SPACE=$(aws ec2 describe-subnets \
+  --filters Name=vpc-id,Values=$VPC_ID \
+            Name=availability-zone,Values=us-east-1a,us-east-1b \
+  --region $AWS_REGION \
+  --profile $AWS_PROFILE \
+  --query 'join(`,`, Subnets[*].SubnetId)' \
+  --output text)
+
+export SUBNET_IDS_COMMA=$(echo "$SUBNET_IDS_SPACE" | tr '\t ' ',,' | sed 's/,,*/,/g; s/^,//; s/,$//')
+
+echo "$SUBNET_IDS_SPACE"
+echo "$SUBNET_IDS_COMMA"
 ```
+
+Do not pass comma-separated subnet IDs to `create-load-balancer`. That command needs subnet IDs separated by spaces.
 
 ---
 
@@ -514,7 +524,7 @@ aws ecs create-cluster   --cluster-name $ECS_CLUSTER_NAME   --region $AWS_REGION
 ## Step 19: Create Application Load Balancer
 
 ```bash
-export ALB_ARN=$(aws elbv2 create-load-balancer   --name day24-python-alb   --subnets $SUBNET_IDS   --security-groups $ALB_SG_ID   --scheme internet-facing   --type application   --region $AWS_REGION   --profile $AWS_PROFILE   --query 'LoadBalancers[0].LoadBalancerArn'   --output text)
+export ALB_ARN=$(aws elbv2 create-load-balancer   --name day24-python-alb   --subnets ${SUBNET_IDS//,/ }   --security-groups $ALB_SG_ID   --scheme internet-facing   --type application   --region $AWS_REGION   --profile $AWS_PROFILE   --query 'LoadBalancers[0].LoadBalancerArn'   --output text)
 
 echo $ALB_ARN
 ```
@@ -532,7 +542,25 @@ echo $ALB_DNS
 ## Step 20: Create Target Group
 
 ```bash
-export TARGET_GROUP_ARN=$(aws elbv2 create-target-group   --name day24-python-tg   --protocol HTTP   --port 5000   --vpc-id $VPC_ID   --target-type ip   --health-check-path /health   --health-check-protocol HTTP   --region $AWS_REGION   --profile $AWS_PROFILE   --query 'TargetGroups[0].TargetGroupArn'   --output text)
+export TARGET_GROUP_ARN=$(aws elbv2 create-target-group \
+  --name day24-python-tg \
+  --protocol HTTP \
+  --port 5000 \
+  --vpc-id $VPC_ID \
+  --target-type ip \
+  --health-check-enabled \
+  --health-check-protocol HTTP \
+  --health-check-port traffic-port \
+  --health-check-path /health \
+  --matcher HttpCode=200 \
+  --healthy-threshold-count 2 \
+  --unhealthy-threshold-count 3 \
+  --health-check-interval-seconds 30 \
+  --health-check-timeout-seconds 5 \
+  --region $AWS_REGION \
+  --profile $AWS_PROFILE \
+  --query 'TargetGroups[0].TargetGroupArn' \
+  --output text)
 
 echo $TARGET_GROUP_ARN
 ```
@@ -640,7 +668,17 @@ The app sends traces to the local X-Ray daemon, and the daemon sends traces to A
 ## Step 23: Create ECS Service
 
 ```bash
-aws ecs create-service   --cluster $ECS_CLUSTER_NAME   --service-name $ECS_SERVICE_NAME   --task-definition $ECS_TASK_FAMILY   --desired-count 2   --launch-type FARGATE   --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_IDS_COMMA],securityGroups=[$ECS_SG_ID],assignPublicIp=ENABLED}"   --load-balancers "targetGroupArn=$TARGET_GROUP_ARN,containerName=$APP_NAME,containerPort=5000"   --region $AWS_REGION   --profile $AWS_PROFILE
+aws ecs create-service \
+  --cluster $ECS_CLUSTER_NAME \
+  --service-name $ECS_SERVICE_NAME \
+  --task-definition $ECS_TASK_FAMILY \
+  --desired-count 2 \
+  --launch-type FARGATE \
+  --health-check-grace-period-seconds 120 \
+  --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_IDS_COMMA],securityGroups=[$ECS_SG_ID],assignPublicIp=ENABLED}" \
+  --load-balancers "targetGroupArn=$TARGET_GROUP_ARN,containerName=$APP_NAME,containerPort=5000" \
+  --region $AWS_REGION \
+  --profile $AWS_PROFILE
 ```
 
 ---
@@ -658,6 +696,28 @@ aws ecs describe-services   --cluster $ECS_CLUSTER_NAME   --services $ECS_SERVIC
 ```
 
 ---
+
+
+If the service is not stable or tasks stop with `Task failed ELB health checks`, inspect the target group and stopped task reason:
+
+```bash
+aws elbv2 describe-target-health \
+  --target-group-arn $TARGET_GROUP_ARN \
+  --region $AWS_REGION \
+  --profile $AWS_PROFILE \
+  --query 'TargetHealthDescriptions[*].{Target:Target.Id,Port:Target.Port,State:TargetHealth.State,Reason:TargetHealth.Reason,Description:TargetHealth.Description}' \
+  --output table
+
+aws ecs list-tasks \
+  --cluster $ECS_CLUSTER_NAME \
+  --desired-status STOPPED \
+  --region $AWS_REGION \
+  --profile $AWS_PROFILE \
+  --query 'taskArns[0:5]' \
+  --output text
+```
+
+The expected healthy target is port `5000` with state `healthy`.
 
 ## Step 25: Test Application Through ALB
 
@@ -1128,6 +1188,37 @@ aws s3 ls s3://$DR_BUCKET/ --profile $AWS_PROFILE
 ---
 
 # Part 17 – Troubleshooting
+
+## ECS task failed ELB health checks
+
+Most failures in this lab are caused by one of these issues:
+
+1. Subnets were passed as one comma-separated value to the ALB. Use `SUBNET_IDS_SPACE` for the ALB and `SUBNET_IDS_COMMA` for ECS.
+2. The target group health check must use `/health` on traffic port `5000`.
+3. The ECS task security group must allow inbound TCP `5000` from the ALB security group.
+4. The ECS service should have a short health-check grace period while the Flask/Gunicorn app starts.
+5. The container name and port in the ECS service load balancer config must exactly match the task definition: `$APP_NAME` and `5000`.
+
+Quick check:
+
+```bash
+aws elbv2 describe-target-health \
+  --target-group-arn $TARGET_GROUP_ARN \
+  --region $AWS_REGION \
+  --profile $AWS_PROFILE \
+  --output table
+
+aws ecs describe-services \
+  --cluster $ECS_CLUSTER_NAME \
+  --services $ECS_SERVICE_NAME \
+  --region $AWS_REGION \
+  --profile $AWS_PROFILE \
+  --query 'services[0].events[0:5]' \
+  --output table
+```
+
+If the target health reason is `Target.Timeout`, check the ECS security group and whether the app is listening on `0.0.0.0:5000`. If it is `Target.ResponseCodeMismatch`, check that `/health` returns HTTP `200`.
+
 
 ## Docker Push Fails
 
