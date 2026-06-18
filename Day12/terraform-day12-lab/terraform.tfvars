@@ -1,0 +1,6 @@
+aws_region        = "us-east-1"
+aws_profile       = "devops"
+environment       = "dev"
+project_name      = "day12-terraform"
+state_bucket_name = "rama-day12-tf-state-20260602"
+lock_table_name   = "rama-day12-terraform-locks"

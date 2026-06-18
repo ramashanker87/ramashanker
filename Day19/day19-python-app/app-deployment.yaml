@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rama-day19-app
+  namespace: rama-day19
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rama-day19-app
+  template:
+    metadata:
+      labels:
+        app: rama-day19-app
+    spec:
+      containers:
+        - name: rama-day19-app
+          image: 386757865964.dkr.ecr.us-east-1.amazonaws.com/rama-day19-python-app:v1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: ebs-volume
+              mountPath: /data/ebs
+            - name: efs-volume
+              mountPath: /data/efs
+      volumes:
+        - name: ebs-volume
+          persistentVolumeClaim:
+            claimName: ebs-data
+        - name: efs-volume
+          persistentVolumeClaim:
+            claimName: efs-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rama-day19-app-svc
+  namespace: rama-day19
+spec:
+  type: LoadBalancer
+  selector:
+    app: rama-day19-app
+  ports:
+    - port: 80
+      targetPort: 8080

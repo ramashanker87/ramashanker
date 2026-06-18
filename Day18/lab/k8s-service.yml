@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rama-ecr-service
+  namespace: day17
+spec:
+  type: LoadBalancer
+  selector:
+    app: rama-ecr-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
